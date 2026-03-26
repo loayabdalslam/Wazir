@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wazir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>Wazir</h1>
+    <div class="subtitle">Multi-Agent National Simulation Platform v3.3.0<br><span style="font-size: 0.85em; opacity: 0.7;">By Loaii abdalslam</span></div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-section">
+    <div class="input-group">
+      <label>Country</label>
+      <input type="text" id="country" placeholder="e.g. Brazil, South Korea, Nigeria, France..." autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label>Goal or Scenario (optional)</label>
+      <input type="text" id="goal" placeholder="e.g. Achieve 7% GDP growth in 3 years..." autocomplete="off">
+    </div>
+    <button class="btn-simulate" id="btn-simulate">SIMULATE</button>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar" id="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+  <div class="status-line" id="status-line"></div>
+
+  <!-- Dashboard -->
+  <div class="dashboard" id="dashboard">
+
+    <!-- Header -->
+    <div class="dashboard-header" id="dashboard-header"></div>
+
+    <!-- Domains -->
+    <div class="section-title">National Status</div>
+    <div class="domain-grid" id="domain-grid"></div>
+
+    <!-- Key Indicators -->
+    <div id="indicators-section" style="margin-top: 32px; display: none;">
+      <div class="section-title">Key Indicators</div>
+      <div class="indicator-grid" id="indicator-grid"></div>
+    </div>
+
+    <!-- Agent Briefs -->
+    <div class="section-title">Swarm Council Briefing</div>
+    <div id="agent-briefs"></div>
+
+    <!-- Scenarios -->
+    <div style="margin-top: 48px;">
+      <div class="section-title">Decision Scenarios</div>
+      <div class="scenario-grid" id="scenario-cards"></div>
+    </div>
+
+    <!-- Projections -->
+    <div style="margin-top: 48px;">
+      <div class="section-title">Simulation Projections</div>
+      <div class="projection-grid" id="projection-grid"></div>
+    </div>
+
+    <!-- Wild Cards -->
+    <div style="margin-top: 48px;">
+      <div class="section-title">Wild Card Alerts</div>
+      <div id="wildcard-list"></div>
+    </div>
+
+    <!-- Feasibility -->
+    <div id="feasibility-section" style="margin-top: 48px;"></div>
+
+  </div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
