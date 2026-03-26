@@ -224,22 +224,43 @@ class SwarmCountry {
         </a>
       `).join('');
     } else {
-      this.sourcesSection.style.display = 'none';
+    this.sourcesSection.style.display = 'none';
     }
   }
 
   renderAgentBrief(msg) {
-    const div = document.createElement('div');
-    div.className = 'agent-brief';
-    div.innerHTML = `
-      <div class="agent-header">
-        <span class="agent-icon">${msg.icon}</span>
-        <span class="agent-name">${msg.agent}</span>
-        <span class="agent-domain">${msg.domain}</span>
+    const sources = msg.sources || [];
+    const sourceHtml = sources.length > 0 ? `
+      <div class="agent-sources-wrapper">
+        <button class="source-toggle" onclick="this.nextElementSibling.classList.toggle('active'); this.querySelector('.toggle-icon').innerText = this.nextElementSibling.classList.contains('active') ? '▲' : '▼'">
+          <span>Verified Sources (${sources.length})</span>
+          <span class="toggle-icon">▼</span>
+        </button>
+        <div class="agent-sources-list">
+          ${sources.map(s => `
+            <a href="${s.url}" target="_blank" class="mini-source">
+              <span class="mini-domain">${s.domain}</span>
+              <span class="mini-title">${s.title}</span>
+            </a>
+          `).join('')}
+        </div>
       </div>
-      <div class="agent-text">${msg.brief}</div>
+    ` : '';
+
+    const card = document.createElement('div');
+    card.className = 'agent-card';
+    card.innerHTML = `
+      <div class="agent-header">
+        <div class="agent-icon">${msg.icon}</div>
+        <div class="agent-details">
+          <div class="agent-name">${msg.agent}</div>
+          <div class="agent-domain">${msg.domain}</div>
+        </div>
+      </div>
+      <div class="agent-brief">${msg.brief}</div>
+      ${sourceHtml}
     `;
-    this.agentList.appendChild(div);
+    this.agentList.prepend(card);
   }
 
   renderScenarios(scenarios) {

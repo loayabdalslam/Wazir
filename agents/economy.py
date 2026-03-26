@@ -6,7 +6,7 @@ class EconomyAgent(BaseAgent):
     icon = "💰"
     domain = "Economy"
 
-    async def analyze(self, country: str, goal: str, data: dict, context: dict = None) -> str:
+    async def analyze(self, country: str, goal: str, data: dict, context: dict = None) -> dict:
         from core.ollama_client import OllamaClient
         import json
         client = OllamaClient()
@@ -15,4 +15,14 @@ class EconomyAgent(BaseAgent):
         if context:
             prompt += f"Colleagues' insights:\n{json.dumps(context)}\n"
         prompt += "\nBased on this, what is your specific advice or assessment?"
-        return await client.generate(prompt=prompt, system=system_prompt)
+        
+        brief = await client.generate(prompt=prompt, system=system_prompt)
+        
+        # Filter sources that this agent focused on
+        all_sources = data.get("raw_sources", [])
+        my_sources = [s for s in all_sources if s.get("domain") == self.domain or s.get("domain") == "Economy"]
+        
+        return {
+            "brief": brief,
+            "sources": my_sources[:2] # Limit to top 2 for brevity
+        }

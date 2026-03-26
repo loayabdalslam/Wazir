@@ -6,13 +6,23 @@ class IntelligenceAgent(BaseAgent):
     icon = "🔒"
     domain = "Intelligence & Security"
 
-    async def analyze(self, country: str, goal: str, data: dict, context: dict = None) -> str:
+    async def analyze(self, country: str, goal: str, data: dict, context: dict = None) -> dict:
         from core.ollama_client import OllamaClient
         import json
         client = OllamaClient()
-        system_prompt = f"You are the {self.name}, focusing on {self.domain}. Keep your analysis concise (2-4 sentences). Do not use markdown headers."
-        prompt = f"Country: {country}\nObjective: {goal}\nData: {json.dumps(data)}\n"
+        system_prompt = f"You are the {self.name}. Focus on stability and external threats. 2-3 sentences."
+        prompt = f"Country: {country}\nGoal: {goal}\nPolitical Data: {json.dumps(data)}\n"
         if context:
             prompt += f"Colleagues' insights:\n{json.dumps(context)}\n"
-        prompt += "\nBased on this, what is your specific advice or assessment?"
-        return await client.generate(prompt=prompt, system=system_prompt)
+        prompt += "Insights?"
+        
+        brief = await client.generate(prompt=prompt, system=system_prompt)
+        all_sources = data.get("raw_sources", [])
+        my_sources = [s for s in all_sources if s.get("domain") == "political"]
+        
+        return {
+            "brief": brief,
+            "sources": my_sources[:2]
+        }
+
+```
