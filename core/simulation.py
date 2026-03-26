@@ -95,80 +95,61 @@ class SimulationEngine:
     async def run_scenario(self, idx: int):
         if idx < len(self.scenarios):
             scenario = self.scenarios[idx]
+            
+            from core.ollama_client import OllamaClient
+            import json
+            client = OllamaClient()
+            
+            # Follow-up actions
+            f_prompt = f"Scenario: {scenario['name']}. Goal: {self.goal}. Country: {self.country}. Generate 4 specific, actionable next steps for a government task force. Return ONLY a JSON list of strings."
+            f_resp = await client.generate(f_prompt, system="Output ONLY raw JSON list of strings.")
+            try: follow_up = json.loads(f_resp)
+            except: follow_up = ["Initiate internal review", "Allocate contingency funds"]
+
+            # Scenario Projections
+            p_prompt = (
+                f"Scenario: {scenario['name']}\n"
+                f"Project the impact on GDP Growth, Inflation, and Approval Rating. Return ONLY valid JSON:\n"
+                "{\"gdp_growth\": {\"min\": 1.1, \"base\": 2.5, \"max\": 4.0}, \"inflation\": {...}, \"approval_rating\": {...}}"
+            )
+            p_resp = await client.generate(p_prompt, system="Output ONLY raw JSON.")
+            try: proj = json.loads(p_resp)
+            except: proj = {}
+
             yield {
                 "type": "scenario_detail",
                 "scenario": scenario,
-                "follow_up": self._generate_follow_up(idx),
-                "projections": self._project_scenario(idx)
+                "follow_up": follow_up,
+                "projections": proj
             }
 
     async def _build_dashboard(self):
-        e = self.data.get("economy", {})
-        d = self.data.get("demographics", {})
+        from core.ollama_client import OllamaClient
+        import json
+        client = OllamaClient()
 
-        self.dashboard = {
-            "country": self.country,
-            "goal": self.goal or "General Assessment",
-            "domains": [
-                {
-                    "name": "Economy",
-                    "icon": "💰",
-                    "status": self._economy_status(e),
-                    "risk": self._economy_risk(e),
-                    "trend": "→"
-                },
-                {
-                    "name": "Military",
-                    "icon": "⚔️",
-                    "status": "Active",
-                    "risk": "Medium",
-                    "trend": "→"
-                },
-                {
-                    "name": "Food Security",
-                    "icon": "🌾",
-                    "status": "Monitoring",
-                    "risk": "Medium",
-                    "trend": "→"
-                },
-                {
-                    "name": "Social Stability",
-                    "icon": "🧑‍🤝‍🧑",
-                    "status": "Stable",
-                    "risk": "Low",
-                    "trend": "→"
-                },
-                {
-                    "name": "Diplomacy",
-                    "icon": "🌍",
-                    "status": "Active",
-                    "risk": "Medium",
-                    "trend": "↗"
-                },
-                {
-                    "name": "Energy",
-                    "icon": "🛢️",
-                    "status": "Monitoring",
-                    "risk": "Medium",
-                    "trend": "↗"
-                },
-                {
-                    "name": "Industry & Trade",
-                    "icon": "🏭",
-                    "status": "Active",
-                    "risk": "Medium",
-                    "trend": "↗"
-                },
-                {
-                    "name": "Intelligence",
-                    "icon": "🔒",
-                    "status": "Clear",
-                    "risk": "Low",
-                    "trend": "→"
-                }
-            ],
-            "metrics": self._extract_metrics()
-        }
+        prompt = (
+            f"Country: {self.country}, Goal: {self.goal}\n"
+            f"Raw Data Snippet: {json.dumps(self.data)[:2000]}\n"
+            "Analyze the state of these 8 domains: Economy, Military, Food Security, Social Stability, Diplomacy, Energy, Industry & Trade, Intelligence.\n"
+            "For each, provide: icon, status (short), risk (Low/Medium/High), and trend (↗, ↘, →).\n"
+            "Return ONLY valid JSON matching this schema:\n"
+            "{\"domains\": [{\"name\": \"Economy\", \"icon\": \"💰\", \"status\": \"...\", \"risk\": \"...\", \"trend\": \"...\"}, ...]}"
+        )
+        
+        response = await client.generate(prompt, system="You are a data-driven intelligence analyst. Output ONLY raw JSON.")
+        try:
+            parsed = json.loads(response)
+            self.dashboard = {
+                "country": self.country,
+                "goal": self.goal or "General Assessment",
+                "domains": parsed.get("domains", []),
+                "metrics": self._extract_metrics(),
+                "sources": self.data.get("raw_sources", [])
+            }
+        except:
+            # Minimal fallback
+            self.dashboard = {"country": self.country, "goal": self.goal, "domains": [], "metrics": [], "sources": []}
 
     def _extract_metrics(self) -> list:
         econ = self.data.get("economy", {})
@@ -193,28 +174,7 @@ class SimulationEngine:
         if social.get("education_spend_pct_gdp"):
             metrics.append({"label": "Edu Spend", "value": f"{social['education_spend_pct_gdp']}%", "icon": "🎓"})
 
-        # Add intelligence-derived metrics if available
-        for domain in ["military", "energy", "political"]:
-            d_data = self.data.get(domain, {})
-            if d_data.get("intelligent_summary"):
-                # We could try to extract numbers here, but for now we'll just flag they exist
-                pass
-
         return metrics
-
-    def _economy_status(self, e: dict) -> str:
-        if e.get("gdp_usd") and e["gdp_usd"] != "N/A":
-            gdp = e["gdp_usd"]
-            if isinstance(gdp, (int, float)):
-                if gdp > 1e12:
-                    return f"${gdp/1e12:.1f}T GDP"
-                elif gdp > 1e9:
-                    return f"${gdp/1e9:.1f}B GDP"
-            return str(gdp)
-        return "Data Pending"
-
-    def _economy_risk(self, e: dict) -> str:
-        return "Medium"
 
     async def _generate_scenarios(self, shared_context: dict = None):
         from core.ollama_client import OllamaClient
@@ -267,25 +227,6 @@ class SimulationEngine:
             self.wildcards = json.loads(response)
         except:
             self.wildcards = [{"agent": "System", "event": "Error parsing JSON", "probability": 0, "impact": "None"}]
-
-
-
-    def _generate_follow_up(self, idx: int) -> list:
-        return [
-            "Assemble a transition task force with clear 90-day milestones",
-            "Prepare contingency budget allocation for implementation risks",
-            "Schedule quarterly review checkpoints with all agents",
-            "Begin diplomatic groundwork for external dependencies"
-        ]
-
-    def _project_scenario(self, idx: int) -> dict:
-        multipliers = [0.7, 1.3, 1.0]
-        m = multipliers[idx]
-        return {
-            "gdp_growth": {"min": round(1.5*m,1), "base": round(3.2*m,1), "max": round(5.8*m,1)},
-            "inflation": {"min": round(2.1/m,1), "base": round(4.5/m,1), "max": round(7.2/m,1)},
-            "approval_rating": {"min": max(20, round(38*m)), "base": round(52*m), "max": min(95, round(65*m))},
-        }
 
     async def _step(self, msg: str, progress: int):
         pass

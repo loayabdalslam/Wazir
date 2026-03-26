@@ -26,6 +26,8 @@ class SwarmCountry {
     this.agentList = document.getElementById('agent-briefs');
     this.scenarioList = document.getElementById('scenario-cards');
     this.wildcardList = document.getElementById('wildcard-list');
+    this.sourcesSection = document.getElementById('sources-section');
+    this.sourcesList = document.getElementById('sources-list');
     this.dashboardHeader = document.getElementById('dashboard-header');
     this.domainGrid = document.getElementById('domain-grid');
 
@@ -159,6 +161,7 @@ class SwarmCountry {
     this.agentList.innerHTML = '';
     this.scenarioList.innerHTML = '';
     this.wildcardList.innerHTML = '';
+    this.sourcesList.innerHTML = '';
     this.domainGrid.innerHTML = '';
     this.domainGrid.innerHTML = '';
     this.dashboardHeader.innerHTML = '';
@@ -208,6 +211,20 @@ class SwarmCountry {
       `).join('');
     } else {
       indSection.style.display = 'none';
+    }
+
+    const sources = data.sources || [];
+    if (sources.length > 0) {
+      this.sourcesSection.style.display = 'block';
+      this.sourcesList.innerHTML = sources.map(s => `
+        <a href="${s.url}" target="_blank" class="source-item">
+          <span class="source-domain">${s.domain}</span>
+          <span class="source-title">${s.title}</span>
+          <span class="source-url">${new URL(s.url).hostname}</span>
+        </a>
+      `).join('');
+    } else {
+      this.sourcesSection.style.display = 'none';
     }
   }
 

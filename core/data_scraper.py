@@ -26,21 +26,24 @@ class CountryDataScraper:
         async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
             results = await asyncio.gather(
                 self._get_economic_data(client, country),
-                self._get_military_data(client, country),
+                self._get_military_data(client, country, goal),
                 self._get_demographics(client, country),
-                self._get_energy_data(client, country),
-                self._get_political_data(client, country),
+                self._get_energy_data(client, country, goal),
+                self._get_political_data(client, country, goal),
                 self._get_social_data(client, country),
                 self._get_live_context(country, goal)
             )
 
         data["economy"] = results[0]
-        data["military"] = results[1]
+        data["military"] = results[1][0]
         data["demographics"] = results[2]
-        data["energy"] = results[3]
-        data["political"] = results[4]
+        data["energy"] = results[3][0]
+        data["political"] = results[4][0]
         data["social"] = results[5]
-        data["live_context"] = results[6]
+        data["live_context"] = results[6][0]
+        
+        # Aggregate sources
+        data["raw_sources"] = results[1][1] + results[3][1] + results[4][1] + results[6][1]
 
         from datetime import datetime, timezone
         data["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -71,35 +74,43 @@ class CountryDataScraper:
             "note": "Live data unavailable - using simulation defaults"
         }
 
-    async def _get_intelligent_domain_data(self, country: str, domain: str) -> dict:
+    async def _get_intelligent_domain_data(self, country: str, domain: str, goal: str = "") -> tuple[dict, list]:
         import asyncio
         from ddgs import DDGS
         
         def do_search():
             if domain == "military":
-                query = f"{country} military size armed forces defense budget 2024"
+                query = f"{country} military capabilities defense budget 2024"
+                if goal: query += f" impact on {goal}"
             elif domain == "energy":
-                query = f"{country} energy grid sources production statistics 2024"
+                query = f"{country} energy grid production 2024 sources"
+                if goal: query += f" {goal} infrastructure"
+            elif domain == "political":
+                query = f"{country} political stability leadership 2024"
+                if goal: query += f" {goal} policy support"
             else:
-                query = f"{country} current political situation leader government type 2024"
+                query = f"{country} {domain} status 2024"
+                if goal: query += f" {goal}"
                 
+            sources = []
             try:
                 with DDGS() as ddgs:
-                    results = list(ddgs.text(query, max_results=2))
+                    results = list(ddgs.text(query, max_results=4))
                     summary = "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+                    sources = [{"title": r['title'], "url": r['href'], "domain": domain} for r in results]
                     return {
                         "domain": domain,
                         "intelligent_summary": summary,
-                        "source": "Live Web Intelligence"
-                    }
+                        "source": "Deep Web Intelligence Scan"
+                    }, sources
             except Exception as e:
-                return {"source": "fallback", "note": str(e)}
+                return {"source": "fallback", "note": str(e)}, []
 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, do_search)
 
-    async def _get_military_data(self, client: httpx.AsyncClient, country: str) -> dict:
-        return await self._get_intelligent_domain_data(country, "military")
+    async def _get_military_data(self, client: httpx.AsyncClient, country: str, goal: str = "") -> tuple[dict, list]:
+        return await self._get_intelligent_domain_data(country, "military", goal)
 
     async def _get_demographics(self, client: httpx.AsyncClient, country: str) -> dict:
         try:
@@ -119,11 +130,11 @@ class CountryDataScraper:
             pass
         return {"source": "fallback"}
 
-    async def _get_energy_data(self, client: httpx.AsyncClient, country: str) -> dict:
-        return await self._get_intelligent_domain_data(country, "energy")
+    async def _get_energy_data(self, client: httpx.AsyncClient, country: str, goal: str = "") -> tuple[dict, list]:
+        return await self._get_intelligent_domain_data(country, "energy", goal)
 
-    async def _get_political_data(self, client: httpx.AsyncClient, country: str) -> dict:
-        return await self._get_intelligent_domain_data(country, "political")
+    async def _get_political_data(self, client: httpx.AsyncClient, country: str, goal: str = "") -> tuple[dict, list]:
+        return await self._get_intelligent_domain_data(country, "political", goal)
 
     async def _get_social_data(self, client: httpx.AsyncClient, country: str) -> dict:
         try:
@@ -143,18 +154,28 @@ class CountryDataScraper:
             pass
         return {"source": "fallback"}
 
-    async def _get_live_context(self, country: str, goal: str) -> str:
+    async def _get_live_context(self, country: str, goal: str) -> tuple[str, list]:
         import asyncio
         from ddgs import DDGS
         
         def do_search():
             try:
-                query = f"{country} current status regarding {goal}" if goal else f"{country} current news events"
+                queries = [
+                    f"{country} news 2024",
+                    f"{country} {goal} feasibility analysis",
+                    f"{country} current challenges {goal}"
+                ]
+                all_results = []
+                sources = []
                 with DDGS() as ddgs:
-                    results = list(ddgs.text(query, max_results=3))
-                    return "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+                    for q in queries:
+                        results = list(ddgs.text(q, max_results=2))
+                        all_results.extend(results)
+                        sources.extend([{"title": r['title'], "url": r['href'], "domain": "Global"} for r in results])
+                
+                return "\n".join([f"- {r['title']}: {r['body']}" for r in all_results]), sources
             except Exception as e:
-                return f"Live search failed: {e}"
+                return f"Live search failed: {e}", []
                 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, do_search)
