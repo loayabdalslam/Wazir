@@ -25,9 +25,7 @@ class SwarmCountry {
     this.dashboard = document.getElementById('dashboard');
     this.agentList = document.getElementById('agent-briefs');
     this.scenarioList = document.getElementById('scenario-cards');
-    this.projectionGrid = document.getElementById('projection-grid');
     this.wildcardList = document.getElementById('wildcard-list');
-    this.feasibilitySection = document.getElementById('feasibility-section');
     this.dashboardHeader = document.getElementById('dashboard-header');
     this.domainGrid = document.getElementById('domain-grid');
 
@@ -111,10 +109,6 @@ class SwarmCountry {
         this.setProgress(msg.progress);
         break;
 
-      case 'projections':
-        this.state.projections = msg.data;
-        this.renderProjections(msg.data);
-        this.setProgress(msg.progress);
         break;
 
       case 'wildcards':
@@ -164,9 +158,8 @@ class SwarmCountry {
   resetUI() {
     this.agentList.innerHTML = '';
     this.scenarioList.innerHTML = '';
-    this.projectionGrid.innerHTML = '';
     this.wildcardList.innerHTML = '';
-    this.feasibilitySection.innerHTML = '';
+    this.domainGrid.innerHTML = '';
     this.domainGrid.innerHTML = '';
     this.dashboardHeader.innerHTML = '';
     this.dashboard.classList.remove('visible');
@@ -303,53 +296,25 @@ class SwarmCountry {
     this.scenarioList.after(div);
   }
 
-  renderProjections(data) {
-    this.projectionGrid.innerHTML = Object.entries(data).map(([key, val]) => {
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      const range = `${val.min}–${val.max}${val.unit}`;
-      const base = `${val.base}${val.unit}`;
-
-      const minV = parseFloat(val.min);
-      const maxV = parseFloat(val.max);
-      const baseV = parseFloat(val.base);
-      const pctBase = maxV > minV ? ((baseV - minV) / (maxV - minV)) * 100 : 50;
-      const pctMin = maxV > minV ? ((minV) / (maxV)) * 20 : 0;
-      const pctWidth = maxV > minV ? 80 : 40;
-
+  renderWildcards(data) {
+    this.wildcardList.innerHTML = data.map(w => {
+      const severityClass = w.impact.toLowerCase() === 'high' ? 'severity-high' : 'severity-med';
       return `
-        <div class="projection-card">
-          <div class="proj-label">${label}</div>
-          <div class="proj-base">${base}</div>
-          <div class="proj-range">${range}</div>
-          <div class="projection-bar">
-            <div class="bar-fill" style="left: ${pctMin}%; width: ${pctWidth}%;"></div>
-            <div class="bar-base" style="left: ${pctBase}%;"></div>
+        <div class="wildcard-alert ${severityClass}">
+          <div class="alert-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          </div>
+          <div class="alert-content">
+            <div class="alert-meta">
+              <span class="alert-agent">${w.agent}</span>
+              <span class="alert-probability">${w.probability}% Prob</span>
+              <span class="alert-impact">${w.impact} Impact</span>
+            </div>
+            <div class="alert-message">${w.event}</div>
           </div>
         </div>
       `;
     }).join('');
-  }
-
-  renderWildcards(data) {
-    this.wildcardList.innerHTML = data.map(w => `
-      <div class="wildcard">
-        <div class="wc-header">
-          <span class="wc-source">${w.agent}</span>
-          <span class="wc-prob">${w.probability}% probability · ${w.impact} impact</span>
-        </div>
-        <div class="wc-event">${w.event}</div>
-      </div>
-    `).join('');
-  }
-
-  renderFeasibility(score) {
-    if (!score) return;
-    this.feasibilitySection.innerHTML = `
-      <div class="feasibility">
-        <div class="score">${score}</div>
-        <div class="score-label">Goal Feasibility Score</div>
-      </div>
-    `;
   }
 }
 

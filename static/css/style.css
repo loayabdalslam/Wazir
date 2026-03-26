@@ -424,70 +424,74 @@ body {
 .scenario-card .vote-for { color: var(--green); }
 .scenario-card .vote-against { color: var(--red); }
 
-/* ===== PROJECTIONS ===== */
-.projection-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+/* ===== ALERTS (WILDCARDS) ===== */
+.wildcard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-bottom: 48px;
 }
 
-.projection-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+.wildcard-alert {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
   border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
+  border-left: 4px solid var(--border);
+  background: var(--surface);
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.projection-card .proj-label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
+.wildcard-alert:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
 }
 
-.projection-card .proj-range {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--text);
-  margin-bottom: 4px;
+.wildcard-alert.severity-high {
+  border-left-color: #ef4444;
+  background: linear-gradient(to right, rgba(239, 68, 68, 0.03), transparent);
 }
 
-.projection-card .proj-base {
-  font-family: var(--mono);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--accent);
+.wildcard-alert.severity-med {
+  border-left-color: #f59e0b;
+  background: linear-gradient(to right, rgba(245, 158, 11, 0.03), transparent);
 }
 
-.projection-bar {
-  height: 3px;
-  background: var(--surface-3);
-  border-radius: 2px;
-  margin-top: 8px;
-  position: relative;
-  overflow: hidden;
+.alert-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--background);
+  color: var(--text-dim);
 }
 
-.projection-bar .bar-fill {
-  position: absolute;
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  opacity: 0.4;
+.severity-high .alert-icon { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+.severity-med .alert-icon { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+
+.alert-content { flex: 1; }
+
+.alert-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 11px;
 }
 
-.projection-bar .bar-base {
-  position: absolute;
-  height: 100%;
-  width: 2px;
-  background: var(--accent);
-  border-radius: 1px;
-}
+.alert-agent { font-weight: 700; color: var(--accent); text-transform: uppercase; }
+.alert-probability { color: var(--text-muted); padding-left: 12px; border-left: 1px solid var(--border); }
+.alert-impact { font-weight: 600; color: var(--text-dim); }
 
+.alert-message {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
 /* ===== WILD CARDS ===== */
 .wildcard {
   background: var(--surface);

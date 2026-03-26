@@ -86,16 +86,9 @@ class SimulationEngine:
         await self._generate_scenarios(shared_context)
         yield {"type": "scenarios", "data": self.scenarios, "progress": 80}
 
-        yield {"type": "status", "message": "Running quantitative projections...", "progress": 85}
-        await self._generate_projections(shared_context)
-        yield {"type": "projections", "data": self.projections, "progress": 90}
-
-        yield {"type": "status", "message": "Scanning for wild cards...", "progress": 95}
+        yield {"type": "status", "message": "Scanning for wild cards...", "progress": 85}
         await self._generate_wildcards(shared_context)
-        yield {"type": "wildcards", "data": self.wildcards, "progress": 98}
-
-        score = self._calculate_feasibility()
-        yield {"type": "feasibility", "score": score, "progress": 100}
+        yield {"type": "wildcards", "data": self.wildcards, "progress": 95}
 
         yield {"type": "complete", "message": "Simulation complete"}
 
@@ -251,37 +244,7 @@ class SimulationEngine:
         except:
             self.scenarios = [{"name": "Error Generating", "icon": "⚠️", "summary": "Failed to parse JSON", "short_term": "", "long_term": "", "risks": [], "agents_for": [], "agents_against": []}]
 
-    async def _generate_projections(self, shared_context: dict = None):
-        from core.ollama_client import OllamaClient
-        import json
-        client = OllamaClient()
-        
-        econ = self.data.get("economy", {})
-        demo = self.data.get("demographics", {})
-        gdp_val = econ.get("gdp_usd", "Unknown")
-        pop_val = demo.get("population", "Unknown")
 
-        prompt = (
-            f"Country: {self.country}, Goal: {self.goal}\n"
-            f"Real Baseline Data to ground your projections: GDP=${gdp_val}, Population={pop_val}.\n"
-            "Using this baseline, calculate realistic projections for this country's future. For example, if it's a developed nation, GDP growth should be around 1-3%. Return ONLY valid JSON matching this schema exactly:\n"
-            "{\n"
-            "  \"gdp_growth\": {\"min\": 1.5, \"base\": 3.2, \"max\": 5.8, \"unit\": \"%\"},\n"
-            "  \"inflation\": {\"min\": 2.1, \"base\": 4.5, \"max\": 7.2, \"unit\": \"%\"},\n"
-            "  \"unemployment\": {\"min\": 4.0, \"base\": 6.5, \"max\": 9.0, \"unit\": \"%\"},\n"
-            "  \"approval_rating\": {\"min\": 38, \"base\": 52, \"max\": 65, \"unit\": \"%\"},\n"
-            "  \"fdi_billion\": {\"min\": 2.1, \"base\": 5.5, \"max\": 12.0, \"unit\": \"$B\"},\n"
-            "  \"military_readiness\": {\"min\": 65, \"base\": 78, \"max\": 88, \"unit\": \"/100\"}\n"
-            "}"
-        )
-        response = await client.generate(prompt=prompt, system="You output ONLY valid JSON, no markdown. Use realistic math based on the given baselines.")
-        try:
-            parsed = json.loads(response)
-            self.projections = parsed
-        except:
-            self.projections = {
-                "gdp_growth": {"min": 0, "base": 0, "max": 0, "unit": "%"}
-            }
 
     async def _generate_wildcards(self, shared_context: dict = None):
         from core.ollama_client import OllamaClient
@@ -305,10 +268,7 @@ class SimulationEngine:
         except:
             self.wildcards = [{"agent": "System", "event": "Error parsing JSON", "probability": 0, "impact": "None"}]
 
-    def _calculate_feasibility(self) -> int:
-        if not self.goal:
-            return 0
-        return 67
+
 
     def _generate_follow_up(self, idx: int) -> list:
         return [
