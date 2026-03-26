@@ -5,7 +5,14 @@
 
 echo "🚀 Launching Wazir: Autonomous National Intelligence (V.3.3.0)"
 
-# 1. Environment Check
+# 1. Repository Management
+if [ ! -d ".git" ]; then
+    echo "📂 Repository not found. Cloning from GitHub..."
+    git clone https://github.com/loayabdalslam/Wazir.git
+    cd Wazir || exit
+fi
+
+# 2. Environment Check
 if ! command -v python3 &> /dev/null; then
     echo "❌ Python 3 is required."
     exit 1

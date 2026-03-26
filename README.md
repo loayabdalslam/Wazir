@@ -2,17 +2,25 @@
 - **Python 3.9+**
 - **Ollama**: You must have [Ollama](https://ollama.com/) installed and running locally.
 - **Ollama Models**: Pull at least one capable model. The system actively looks for advanced tags (e.g., `deepseek`, `gemma3`, `minimax`, `llama3`). 
+- **Ollama Models**: Pull at least one capable model. The system actively looks for advanced tags (e.g., `deepseek`, `gemma3`, `minimax`, `llama3`).
   ```bash
   ollama run deepseek-coder  # or your preferred model
   ```
 
 ## 🚀 Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/Wazir.git
-   cd Wazir
-   ```
+### ⚡ One-Liner Installation (Recommended)
+You can clone, install, and launch Wazir with a single command:
+```bash
+curl -sSL https://raw.githubusercontent.com/loayabdalslam/Wazir/refs/heads/main/install_and_run.sh | bash
+```
+
+### Manual Quick Start (Linux/macOS)
+```bash
+git clone https://github.com/loayabdalslam/Wazir.git
+cd Wazir
+bash install_and_run.sh
+```
 
 2. **Install the dependencies:**
    ```bash

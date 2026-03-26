@@ -25,4 +25,3 @@ class IntelligenceAgent(BaseAgent):
             "sources": my_sources[:2]
         }
 
-```
